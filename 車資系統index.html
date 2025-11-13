@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>海天瘋爆車資查報系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "PingFang TC", "Helvetica Neue", Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .search-container {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        input {
+            flex: 3;
+            min-width: 0;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        button {
+            flex: 1;
+            max-width: 100px;
+            padding: 12px 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 0 20px 15px;
+            background: #f8f9fa;
+        }
+        .filter-btn {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        .results {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .district-header {
+            background-color: #FFEB3B;
+            padding: 10px 20px;
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+            border-bottom: 1px solid #FFD54F;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .district-count {
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .result-item:hover {
+            background: #f9f9f9;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .location {
+            font-weight: 500;
+            font-size: 18px;
+        }
+        .price {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+        .highlight {
+            background-color: #fff8e1;
+            font-weight: bold;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+        .counter {
+            text-align: center;
+            padding: 10px;
+            font-size: 16px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .help-text {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            border-top: 1px solid #eaeaea;
+        }
+        @media (max-width: 600px) {
+            .search-container {
+                flex-direction: row;
+            }
+            input {
+                flex: 2;
+                font-size: 16px;
+                padding: 10px 12px;
+            }
+            button {
+                flex: 1;
+                max-width: 80px;
+                padding: 10px 8px;
+                font-size: 14px;
+            }
+            .filter-options {
+                justify-content: center;
+            }
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            .district-header {
+                font-size: 16px;
+            }
+            .location {
+                font-size: 16px;
+            }
+            .price {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>海天瘋爆車資查報系統</h1>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="輸入地點或區名...">
+            <button onclick="searchFares()">
+                <i class="fas fa-search"></i> 搜尋
+            </button>
+        </div>
+        
+        <div class="filter-options">
+            <div class="filter-btn active" onclick="changeSort('district')">按區域排序</div>
+            <div class="filter-btn" onclick="changeSort('price')">按價格排序</div>
+            <div class="filter-btn" onclick="changeSort('name')">按名稱排序</div>
+        </div>
+        
+        <div class="counter" id="counter">共找到 0 個結果</div>
+        
+        <div class="results" id="results">
+            <div class="no-results">請輸入搜尋關鍵字</div>
+        </div>
+        
+        <div class="help-text">
+            <i class="fas fa-info-circle"></i> 提示：可以輸入多個關鍵字，用空格分隔
+        </div>
+    </div>
+
+    <script>
+        // === 配置部分：已設定你的 Google Sheets ID ===
+        const SHEET_ID = '1ooEYNRy7BhRWLlhAT6vLfsZ0M4DqSUgeHk-ae6YYjjA';
+        const SHEET_NAME = 'Sheet1';
+        // === 配置結束 ===
+
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('results');
+        const counterElement = document.getElementById('counter');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        let currentSort = 'district';
+        let fareData = [];
+
+        // 頁面加載時從 Google Sheets 獲取資料
+        window.addEventListener('DOMContentLoaded', function() {
+            loadDataFromSheet();
+        });
+
+        // 從 Google Sheets 加載資料的函數
+        async function loadDataFromSheet() {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+            
+            try {
+                resultsContainer.innerHTML = '<div class="no-results">正在從雲端載入最新車資資料...</div>';
+                
+                const response = await fetch(url);
+                const csvText = await response.text();
+                
+                const lines = csvText.split('\n').slice(1);
+                const parsedData = [];
+                let currentDistrict = '';
+
+                lines.forEach(line => {
+                    const cells = line.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
+                    if (cells && cells.length >= 3) {
+                        const district = cells[0].replace(/^"|"$/g, '').trim();
+                        const location = cells[1].replace(/^"|"$/g, '').trim();
+                        const price = parseInt(cells[2].replace(/^"|"$/g, '').trim());
+                        
+                        if (district) currentDistrict = district;
+                        
+                        let districtObj = parsedData.find(d => d.district === currentDistrict);
+                        if (!districtObj) {
+                            districtObj = { district: currentDistrict, locations: [] };
+                            parsedData.push(districtObj);
+                        }
+                        districtObj.locations.push({ name: location, price: price });
+                    }
+                });
+
+                fareData = parsedData;
+                
+                console.log('資料加載成功:', fareData);
+                searchInput.placeholder = "資料已載入！輸入地點或區名...";
+                resultsContainer.innerHTML = '<div class="no-results">資料已就緒，請開始搜尋</div>';
+                counterElement.textContent = '共找到 0 個結果';
+                
+            } catch (error) {
+                console.error('加載資料失敗:', error);
+                resultsContainer.innerHTML = '<div class="no-results">載入資料失敗，請檢查網路連接或稍後再試。</div>';
+            }
+        }
+
+        // 支援按Enter鍵搜尋
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchFares();
+            }
+        });
+
+        // 即時搜尋功能
+        searchInput.addEventListener('input', function() {
+            if (this.value.trim().length >= 1) {
+                searchFares();
+            } else {
+                resultsContainer.innerHTML = '<div class="no-results">請輸入搜尋關鍵字</div>';
+                counterElement.textContent = '共找到 0 個結果';
+            }
+        });
+
+        function changeSort(sortType) {
+            currentSort = sortType;
+            
+            // 更新按鈕狀態
+            filterButtons.forEach(btn => {
+                if (btn.textContent.includes(getSortText(sortType))) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // 重新搜尋
+            if (searchInput.value.trim().length >= 1) {
+                searchFares();
+            }
+        }
+        
+        function getSortText(sortType) {
+            switch(sortType) {
+                case 'district': return '按區域排序';
+                case 'price': return '按價格排序';
+                case 'name': return '按名稱排序';
+                default: return '按區域排序';
+            }
+        }
+
+        function searchFares() {
+            const searchText = searchInput.value.trim();
+            
+            // 清空先前結果
+            resultsContainer.innerHTML = '';
+            
+            if (searchText === '') {
+                resultsContainer.innerHTML = '<div class="no-results">請輸入搜尋關鍵字</div>';
+                counterElement.textContent = '共找到 0 個結果';
+                return;
+            }
+            
+            const searchTerms = searchText.split(' ').filter(term => term.length > 0);
+            let totalResults = 0;
+            
+            if (currentSort === 'district') {
+                // 按區域分組顯示
+                fareData.forEach(district => {
+                    const matchedLocations = district.locations.filter(location => 
+                        searchTerms.some(term => 
+                            location.name.includes(term) || district.district.includes(term)
+                        )
+                    );
+                    
+                    if (matchedLocations.length > 0) {
+                        const districtHeader = document.createElement('div');
+                        districtHeader.className = 'district-header';
+                        districtHeader.innerHTML = `
+                            <span>${highlightText(district.district, searchTerms)}</span>
+                            <span class="district-count">${matchedLocations.length} 個地點</span>
+                        `;
+                        resultsContainer.appendChild(districtHeader);
+                        
+                        matchedLocations.forEach(location => {
+                            const item = document.createElement('div');
+                            item.className = 'result-item';
+                            item.innerHTML = `
+                                <span class="location">${highlightText(location.name, searchTerms)}</span>
+                                <span class="price">${location.price} 元</span>
+                            `;
+                            resultsContainer.appendChild(item);
+                            totalResults++;
+                        });
+                    }
+                });
+            } else if (currentSort === 'price' || currentSort === 'name') {
+                // 按價格或名稱排序顯示
+                let allResults = [];
+                
+                fareData.forEach(district => {
+                    district.locations.forEach(location => {
+                        if (searchTerms.some(term => 
+                            location.name.includes(term) || district.district.includes(term)
+                        )) {
+                            allResults.push({
+                                district: district.district,
+                                name: location.name,
+                                price: location.price
+                            });
+                        }
+                    });
+                });
+                
+                // 排序
+                if (currentSort === 'price') {
+                    allResults.sort((a, b) => a.price - b.price);
+                } else {
+                    allResults.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+                }
+                
+                // 顯示結果
+                if (allResults.length > 0) {
+                    allResults.forEach(item => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'result-item';
+                        resultItem.innerHTML = `
+                            <span class="location">${highlightText(item.name, searchTerms)} <small>(${item.district})</small></span>
+                            <span class="price">${item.price} 元</span>
+                        `;
+                        resultsContainer.appendChild(resultItem);
+                        totalResults++;
+                    });
+                }
+            }
+            
+            // 更新計數器
+            counterElement.textContent = `共找到 ${totalResults} 個結果`;
+            
+            // 如果沒有找到任何結果
+            if (totalResults === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">找不到符合的結果</div>';
+            }
+        }
+        
+        function highlightText(text, searchTerms) {
+            if (!searchTerms || searchTerms.length === 0) return text;
+            
+            let highlightedText = text;
+            searchTerms.forEach(term => {
+                if (term) {
+                    const regex = new RegExp(`(${term})`, 'gi');
+                    highlightedText = highlightedText.replace(regex, '<span class="highlight">$1</span>');
+                }
+            });
+            
+            return highlightedText;
+        }
+    </script>
+</body>
+</html>
